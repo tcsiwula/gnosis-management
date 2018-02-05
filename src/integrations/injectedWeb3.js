@@ -38,8 +38,7 @@ class BaseIntegration {
    * @returns {Promise<string>} - Network Identifier
    */
   async getNetworkId() {
-    const networkId = await this.web3.eth.net.getId()
-    return networkId
+    return this.web3.eth.net.getId()
   }
 
   /**

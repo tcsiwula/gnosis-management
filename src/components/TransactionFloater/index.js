@@ -1,6 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { NavLink } from 'react-router-dom'
+import { Link } from 'react-router'
 import { takeRight } from 'lodash'
 
 import moment from 'moment'
@@ -102,9 +102,9 @@ const TransactionFloater = ({
         })}
       </div>
       <div className="transactionFloater__footer">
-        <NavLink to="/transactions" onClick={hideTransactionLog}>
+        <Link to="/transactions" onClick={hideTransactionLog}>
           Show all transactions
-        </NavLink>
+        </Link>
       </div>
     </div>
   </div>

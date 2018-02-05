@@ -1,4 +1,4 @@
-import createHistory from 'history/createBrowserHistory'
+import { browserHistory } from 'react-router'
 import { createStore, applyMiddleware, compose } from 'redux'
 import thunk from 'redux-thunk'
 import { routerMiddleware } from 'react-router-redux'
@@ -13,11 +13,9 @@ import Notifications from 'middlewares/Notifications'
 
 import reducer from 'reducers'
 
-export const history = createHistory()
-
 const middlewares = [
   thunk,
-  routerMiddleware(history),
+  routerMiddleware(browserHistory),
   Notifications,
   Blockchain,
   Providers,
