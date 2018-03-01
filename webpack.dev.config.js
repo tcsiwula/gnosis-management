@@ -1,5 +1,6 @@
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const FaviconsWebpackPlugin = require('favicons-webpack-plugin')
+const CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin')
 
 const path = require('path')
 const webpack = require('webpack')
@@ -22,7 +23,7 @@ const ethereumUrl =
 
 module.exports = {
   context: path.join(__dirname, 'src'),
-  entry: ['react-hot-loader/patch', 'bootstrap-loader', 'index.js'],
+  entry: ['bootstrap-loader', 'index.js'],
   devtool: 'eval-source-map',
   output: {
     publicPath: '/',
@@ -50,16 +51,19 @@ module.exports = {
         test: /\.(jpe?g|png|svg)$/i,
         loader: 'file-loader?hash=sha512&digest=hex&name=img/[hash].[ext]',
       },
+      // TODO: Remove this special rule for css-modules when all globally scoped CSS is removed
+      // change the RegEx to: `/*.(scss|css)$/`
       {
-        test: /\.(scss|css)$/,
+        test: /\.mod\.(scss|css)$/,
         use: [
-          {
-            loader: 'style-loader',
-          },
+          'style-loader',
           {
             loader: 'css-loader',
             options: {
               sourceMap: true,
+              modules: true,
+              localIdentName: '[name]__[local]___[hash:base64:5]',
+              importLoaders: 2,
             },
           },
           {
@@ -72,6 +76,29 @@ module.exports = {
         ],
       },
       {
+        test: /^((?!\.mod).)*\.(css|scss)$/,
+        use: [
+          'style-loader',
+          {
+            loader: 'css-loader',
+            options: {
+              sourceMap: true,
+              importLoaders: 2,
+            },
+          },
+          {
+            loader: 'postcss-loader',
+            options: {
+              sourceMap: true,
+            },
+          },
+          {
+            loader: 'sass-loader',
+            options: { sourceMap: true },
+          },
+        ],
+      },
+      {
         test: /\.(ttf|otf|eot|woff(2)?)(\?[a-z0-9]+)?$/,
         loader: 'file-loader?name=fonts/[name].[ext]',
       },
@@ -80,6 +107,7 @@ module.exports = {
   devServer: {
     disableHostCheck: true,
     historyApiFallback: true,
+    hot: true,
     port: 5000,
     proxy: {
       '/api': {
@@ -92,6 +120,7 @@ module.exports = {
     },
   },
   plugins: [
+    new CaseSensitivePathsPlugin(),
     new FaviconsWebpackPlugin({
       logo: 'assets/img/gnosis_logo_favicon.png',
       // Generate a cache file with control hashes and

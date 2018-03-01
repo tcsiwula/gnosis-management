@@ -1,7 +1,7 @@
 import { List } from 'immutable'
 import { requestFromRestAPI } from 'api/utils/fetch'
 import { hexWithoutPrefix } from 'utils/helpers'
-import { BoundsRecord, MarketRecord, OutcomeRecord } from '../models'
+import { BoundsRecord, MarketRecord, OutcomeRecord } from 'store/models'
 import addMarkets from './addMarkets'
 
 // TODO The default assignment is because JEST test do not work out of the box
@@ -25,16 +25,26 @@ const buildOutcomesFrom = (outcomes, marginalPrices) => {
 const buildBoundsFrom = (lower, upper, unit) => BoundsRecord({ lower, upper, unit })
 
 const extractMarkets = markets => markets.map((market) => {
-  const { eventDescription } = market.event.oracle
-  const { title, resolutionDate: date, outcomes: outcomesResponse } = eventDescription
-  const volume = market.tradingVolume
-  const { type } = market.event
+  const {
+    stage,
+    contract: { address, creationDate: creation },
+    tradingVolume,
+    event: { type },
+  } = market
+  const { eventDescription, isOutcomeSet: resolved } = market.event.oracle
+  const {
+    title,
+    unit,
+    resolutionDate: resolution,
+    outcomes: outcomesResponse,
+  } = eventDescription
+
   const outcomes = buildOutcomesFrom(outcomesResponse, market.marginalPrices)
-  const { unit } = market.event.oracle.eventDescription
   const bounds = buildBoundsFrom(market.event.lowerBound, market.event.upperBound, unit)
 
-  // eslint-disable-next-line
-  const marketRecord = new MarketRecord({ title, date, volume, type, outcomes, bounds });
+  const marketRecord = new MarketRecord({
+    title, address, resolution, creation, stage, volume: tradingVolume, resolved, type, outcomes, bounds,
+  })
 
   return marketRecord
 })

@@ -2,6 +2,10 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import autobind from 'autobind-decorator'
 import cn from 'classnames'
+import OutcomeColorBox from 'components/OutcomeColorBox'
+import PageFrame from 'components/layout/PageFrame'
+import Block from 'components/layout/Block'
+import Title from 'components/layout/Title'
 import Outcome from 'components/Outcome'
 import DecimalValue from 'components/DecimalValue'
 import CurrencyName from 'components/CurrencyName'
@@ -9,16 +13,17 @@ import { add0xPrefix, weiToEth, getOutcomeName, isMarketResolved, isMarketClosed
 import { marketShareShape } from 'utils/shapes'
 import {
   COLOR_SCHEME_DEFAULT,
-  COLOR_SCHEME_SCALAR,
-  OUTCOME_TYPES,
   LOWEST_DISPLAYED_VALUE,
   TRANSACTION_DESCRIPTIONS,
   RESOLUTION_TIME,
+  OUTCOME_TYPES,
+  COLOR_SCHEME_SCALAR,
 } from 'utils/constants'
 import moment from 'moment'
 import Decimal from 'decimal.js'
 import { EXPAND_MY_SHARES } from 'components/MarketDetail/ExpandableViews'
 
+import Metrics from './Metrics'
 import './dashboard.scss'
 
 const getNewMarkets = (markets = [], limit) =>
@@ -72,9 +77,7 @@ class Dashboard extends Component {
   }
 
   renderControls() {
-    return (
-      <div />
-    )
+    return <div />
   }
 
   renderNewMarkets(markets) {
@@ -92,21 +95,24 @@ class Dashboard extends Component {
   }
 
   renderClosingMarkets(markets) {
-    return markets.map(market => (
-      <div
-        className="dashboardMarket dashboardMarket--closing dashboardMarket--twoColumns"
-        key={market.address}
-        onClick={() => this.handleViewMarket(market)}
-      >
-        <div className="dashboardMarket__leftCol">
-          <div className="value">{moment.utc(market.eventDescription.resolutionDate).fromNow()}</div>
+    return markets.map((market) => {
+      const viewMarket = () => this.handleViewMarket(market)
+      return (
+        <div
+          className="dashboardMarket dashboardMarket--closing dashboardMarket--twoColumns"
+          key={market.address}
+          onClick={viewMarket}
+        >
+          <div className="dashboardMarket__leftCol">
+            <div className="value">{moment.utc(market.eventDescription.resolutionDate).fromNow()}</div>
+          </div>
+          <div className="dashboardMarket__rightCol">
+            <div className="dashboardMarket__title">{market.eventDescription.title}</div>
+            <Outcome market={market} opts={{ showOnlyTrendingOutcome: true }} />
+          </div>
         </div>
-        <div className="dashboardMarket__rightCol">
-          <div className="dashboardMarket__title">{market.eventDescription.title}</div>
-          <Outcome market={market} opts={{ showOnlyTrendingOutcome: true }} />
-        </div>
-      </div>
-    ))
+      )
+    })
   }
 
   renderMyHoldings(holdings) {
@@ -128,7 +134,7 @@ class Dashboard extends Component {
           <div className="dashboardMarket__title">{share.eventDescription.title}</div>
           <div className="outcome row">
             <div className="col-md-3">
-              <div className="entry__color" style={outcomeColorStyle} />
+              <OutcomeColorBox style={outcomeColorStyle} />
               <div className="dashboardMarket--highlight">{getOutcomeName(share, share.outcomeToken.index)}</div>
             </div>
             <div className="col-md-2 dashboardMarket--highlight">
@@ -178,15 +184,11 @@ class Dashboard extends Component {
       const viewMarket = () => this.handleViewMarket(market)
 
       return (
-        <div
-          className="dashboardMarket dashboardMarket--onDark"
-          key={index}
-          onClick={viewMarket}
-        >
+        <div className="dashboardMarket dashboardMarket--onDark" key={index} onClick={viewMarket}>
           <div className="dashboardMarket__title">{market.eventDescription.title}</div>
           <div className="outcome row">
             <div className="col-md-3">
-              <div className="entry__color" style={outcomeColorStyle} />
+              <OutcomeColorBox style={outcomeColorStyle} />
               <div className="dashboardMarket--highlight">{getOutcomeName(market, trade.outcomeToken.index)}</div>
             </div>
             <div className="col-md-3 dashboardMarket--highlight">
@@ -196,7 +198,7 @@ class Dashboard extends Component {
             <div className="col-md-4 dashboardMarket--highlight">
               {moment.utc(trade.date).format(RESOLUTION_TIME.ABSOLUTE_FORMAT)}
             </div>
-            <div className="col-md-3 dashboardMarket--highlight">{TRANSACTION_DESCRIPTIONS[trade.orderType]}</div>
+            <div className="col-md-2 dashboardMarket--highlight">{TRANSACTION_DESCRIPTIONS[trade.orderType]}</div>
           </div>
         </div>
       )
@@ -272,33 +274,11 @@ class Dashboard extends Component {
 
   render() {
     const { hasWallet, etherTokens, accountPredictiveAssets } = this.props
-
     let metricsSection = <div />
     let tradesHoldingsSection = <div className="dashboardWidgets dashboardWidgets--financial" />
+    const predictedProfitFormatted = Decimal(accountPredictiveAssets).toDP(4, 1).toString()
     if (hasWallet) {
-      metricsSection = (
-        <div className="dashboardPage__stats">
-          <div className="container">
-            <div className="row dashboardStats">
-              <div className="col-xs-10 col-xs-offset-1 col-sm-3 col-sm-offset-0 dashboardStats__stat">
-                <div className="dashboardStats__icon icon icon--etherTokens" />
-                <span className="dashboardStats__value">
-                  <DecimalValue value={etherTokens} />
-                </span>
-                <div className="dashboardStats__label">Ether Tokens</div>
-              </div>
-              <div className="col-xs-10 col-xs-offset-1 col-sm-3 col-sm-offset-0 dashboardStats__stat">
-                <div className="dashboardStats__icon icon icon--outstandingPredictions" />
-                <span className="dashboardStats__value" style={{ color: 'green' }}>
-                  <DecimalValue value={accountPredictiveAssets} />
-                  &nbsp;ETH
-                </span>
-                <div className="dashboardStats__label">Outstanding predictions</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )
+      metricsSection = <Metrics tokens={etherTokens} predictedProfit={predictedProfitFormatted} />
 
       tradesHoldingsSection = (
         <div className="dashboardWidgets dashboardWidgets--financial">
@@ -315,18 +295,17 @@ class Dashboard extends Component {
     return (
       <div className="dashboardPage">
         <div className="dashboardPage__header">
-          <div className="pageFrame container">
+          <PageFrame>
             <div className="row">
               <div className="col-xs-10 col-xs-offset-1 col-sm-12 col-sm-offset-0">
-                <div>
-                  <h1>Dashboard</h1>
-                </div>
+                <Block margin="md">
+                  <Title>Dashboard</Title>
+                </Block>
+                <Block margin="xl">{metricsSection}</Block>
               </div>
             </div>
-          </div>
+          </PageFrame>
         </div>
-        {metricsSection}
-        {this.renderControls()}
         <div className="dashboardWidgets dashboardWidgets--markets">
           <div className="container">
             <div className="row">
@@ -344,13 +323,15 @@ class Dashboard extends Component {
 const marketPropType = PropTypes.object
 
 Dashboard.propTypes = {
+  //   selectedCategoricalOutcome: PropTypes.string,
+  //   selectedBuyInvest: PropTypes.string,
+  //   buyShares: PropTypes.func,
+  //   market: marketPropType,
   markets: PropTypes.arrayOf(marketPropType),
   defaultAccount: PropTypes.string,
   hasWallet: PropTypes.bool,
   accountShares: PropTypes.objectOf(marketShareShape),
   accountTrades: PropTypes.array,
-  accountPredictiveAssets: PropTypes.string,
-  etherTokens: PropTypes.string,
   requestMarkets: PropTypes.func,
   requestGasPrice: PropTypes.func,
   requestAccountShares: PropTypes.func,
@@ -359,6 +340,8 @@ Dashboard.propTypes = {
   requestEtherTokens: PropTypes.func,
   gnosisInitialized: PropTypes.bool,
   redeemWinnings: PropTypes.func,
+  accountPredictiveAssets: PropTypes.string,
+  etherTokens: PropTypes.string,
 }
 
 export default Dashboard
