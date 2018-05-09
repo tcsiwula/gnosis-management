@@ -400,7 +400,7 @@ Dashboard.propTypes = {
   accountPredictiveAssets: PropTypes.string.isRequired,
   defaultTokenAmount: PropTypes.string.isRequired,
   tokenSymbol: PropTypes.string,
-  tokenIcon: PropTypes.string.isRequired,
+  tokenIcon: PropTypes.string,
   requestTokenSymbol: PropTypes.func.isRequired,
   fetchTournamentUsers: PropTypes.func.isRequired,
   fetchTournamentUserData: PropTypes.func.isRequired,
